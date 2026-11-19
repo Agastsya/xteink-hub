@@ -1,0 +1,34 @@
+plugins {
+    id 'com.android.application'
+    id 'com.chaquo.python'
+}
+
+def runNo = (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInteger()
+
+android {
+    namespace 'com.agastsya.xteinkhub'
+    compileSdk 34
+    defaultConfig {
+        applicationId 'com.agastsya.xteinkhub'
+        minSdk 24
+        targetSdk 34
+        versionCode runNo
+        versionName "1.0.${runNo}"
+        ndk { abiFilters 'arm64-v8a', 'armeabi-v7a' }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+chaquopy {
+    defaultConfig {
+        version = "3.11"
+        pip {
+            install "feedparser"
+            install "requests"
+            install "beautifulsoup4"
+        }
+    }
+}
