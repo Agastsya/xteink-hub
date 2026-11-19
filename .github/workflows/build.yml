@@ -1,54 +1,35 @@
-name: Build APK
-
+name: Build Xteink Hub APK
 on:
   push:
-    branches: [main]
   workflow_dispatch:
-
 permissions:
   contents: write
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
+      - name: Unpack app
+        run: mkdir src && tar xzf xteink-hub-app.tar.gz -C src
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.9"
-
-      - name: Install signing key (keeps updates installable)
-        env:
-          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+      - name: Build APK
+        working-directory: src
         run: |
-          if [ -n "$KEYSTORE_B64" ]; then
-            mkdir -p ~/.android
-            echo "$KEYSTORE_B64" | base64 -d > ~/.android/debug.keystore
-          fi
-
-      - name: Build
-        run: gradle assembleDebug --stacktrace
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: XteinkHub-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
-
-      - name: Publish release
+          mkdir -p ~/.android
+          cp signing/debug.keystore ~/.android/debug.keystore
+          gradle assembleDebug --stacktrace
+      - name: Publish to Releases
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp app/build/outputs/apk/debug/app-debug.apk XteinkHub.apk
-          gh release create "v1.0.${{ github.run_number }}" XteinkHub.apk \
-            --title "Xteink Hub 1.0.${{ github.run_number }}" \
-            --notes "Download XteinkHub.apk on your phone and install it."
+          cp src/app/build/outputs/apk/debug/app-debug.apk XteinkHub.apk
+          gh release create "v1.0.${{ github.run_number }}" XteinkHub.apk --title "Xteink Hub 1.0.${{ github.run_number }}" --notes "Tap XteinkHub.apk to download and install."
